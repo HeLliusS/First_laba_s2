@@ -7,7 +7,7 @@ typedef struct Matrix {
     void* value;
     int height;
     int length;
-    TypeInfo* info; //сделать const
+    const TypeInfo* info;
 } Matrix;
 
 void initMatrix(Matrix*, int, int, const TypeInfo*);

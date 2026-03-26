@@ -3,7 +3,7 @@
 
 #include "integer_type.h"
 
-void addInteger(const void* first, const void* const second, void* const result) {
+void addInteger(const void* const first, const void* const second, void* const result) {
     Integer* sumInt = (Integer*)result;
 
     const Integer* const firstInt = (const Integer*)first;

@@ -3,7 +3,7 @@
 
 #include "matrix_type.h"
 
-void setMatrixElem(Matrix*, int, int, void*);
+void setMatrixElem(Matrix*, int, int, const void*);
 
 void printMatrix(const Matrix*);
 
@@ -13,6 +13,6 @@ void multMatrix(const Matrix*, const Matrix*, Matrix*);
 
 void transMatrix(const Matrix*, Matrix*);
 
-void lineAddMatrix(Matrix*, int, void*);
+void lineAddMatrix(Matrix*, int, const void*);
 
 #endif

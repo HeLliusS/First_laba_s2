@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "matrix_type.h"
+#include "matrix_functions.h"
 
 void setMatrixElem(Matrix* matrix, const int colon, const int line, const void* value) {
     if (colon > matrix->length || colon < 0 || line > matrix->height || line < 0) {
@@ -9,7 +9,7 @@ void setMatrixElem(Matrix* matrix, const int colon, const int line, const void* 
         return;
     }
 
-    matrix->info->set(value, matrix->value + (colon + line * matrix->length) * sizeof(void*));
+    matrix->info->set(value, (char*)matrix->value + (colon + line * matrix->length) * matrix->info->elemSize);
 }
 
 void printMatrix(const Matrix* matrix) {
@@ -18,9 +18,9 @@ void printMatrix(const Matrix* matrix) {
 
     for (coordHeight = 0; coordHeight < matrix->height; coordHeight++) {
         for (coordLength = 0; coordLength < matrix->length; coordLength++) {
-            coord = (coordLength + coordHeight * matrix->length) * sizeof(void*);
+            coord = (coordLength + coordHeight * matrix->length) * matrix->info->elemSize;
 
-            matrix->info->print(matrix->value + coord);
+            matrix->info->print((char*)matrix->value + coord);
 
             if (coordLength + 1 != matrix->length) printf(" ");
         }
@@ -41,13 +41,16 @@ void sumMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
 
     initMatrix(newMatrix, first->height, first->length, first->info);
 
+    if (newMatrix->value == NULL)
+        return;
+
     int coordLength = 0, coordHeight = 0, length = first->length, height = first->height;
     int coord = 0;
 
     for (coordHeight = 0; coordHeight < height; coordHeight++) {
         for (coordLength = 0; coordLength < length; coordLength++) {
-            coord = (coordLength + coordHeight * length) * sizeof(void*);
-            first->info->add((first->value + coord), (second->value + coord), (newMatrix->value + coord));
+            coord = (coordLength + coordHeight * length) * first->info->elemSize;
+            first->info->add(((char*)first->value + coord), ((char*)second->value + coord), ((char*)newMatrix->value + coord));
         }
     }
 }
@@ -65,21 +68,24 @@ void multMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
 
     initMatrix(newMatrix, first->height, second->length, first->info);
 
+    if (newMatrix->value == NULL)
+        return;
+
     int coordNewLength = 0, coordNewHeight = 0, coordSlip = 0;
     int coord = 0, coordFirst = 0, coordSecond = 0;
     void* timelyMult = malloc(newMatrix->info->elemSize);
 
     for (coordNewLength = 0; coordNewLength < newMatrix->length; coordNewLength++) {
         for (coordNewHeight = 0; coordNewHeight < newMatrix->height; coordNewHeight++) {
-            coord = (coordNewLength + coordNewHeight * newMatrix->length) * sizeof(void*);
-            newMatrix->info->set(newMatrix->info->neutralElemAdd, newMatrix->value + coord);
+            coord = (coordNewLength + coordNewHeight * newMatrix->length) * first->info->elemSize;
+            newMatrix->info->set(newMatrix->info->neutralElemAdd, (char*)newMatrix->value + coord);
 
             for (coordSlip = 0; coordSlip < first->length; coordSlip++) {
-                coordFirst = (coordNewHeight * first->length + coordSlip) * sizeof(void*);
-                coordSecond = (coordNewLength + second->length * coordSlip) * sizeof(void*);
+                coordFirst = (coordNewHeight * first->length + coordSlip) * first->info->elemSize;
+                coordSecond = (coordNewLength + second->length * coordSlip) * first->info->elemSize;
                 newMatrix->info->mult(first->value + coordFirst, second->value + coordSecond, timelyMult);
 
-                newMatrix->info->add(newMatrix->value + coord, timelyMult, newMatrix->value + coord);
+                newMatrix->info->add((char*)newMatrix->value + coord, timelyMult, (char*)newMatrix->value + coord);
             }
         }
     }
@@ -90,14 +96,17 @@ void multMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
 void transMatrix(const Matrix* matrix, Matrix* newMatrix) {
     initMatrix(newMatrix, matrix->length, matrix->height, matrix->info);
 
+    if (newMatrix->value == NULL)
+        return;
+
     int coordLengthNew = 0, coordHeightNew = 0;
     int coordNew = 0, coordMatrix = 0;
 
     for (coordHeightNew = 0; coordHeightNew < newMatrix->height; coordHeightNew++) {
         for (coordLengthNew = 0; coordLengthNew < newMatrix->length; coordLengthNew++) {
-            coordNew = (coordHeightNew * newMatrix->length + coordLengthNew) * sizeof(void*);
-            coordMatrix = (coordLengthNew * matrix->length + coordHeightNew) * sizeof(void*);
-            newMatrix->info->set(matrix->value + coordMatrix, newMatrix->value + coordNew);
+            coordNew = (coordHeightNew * newMatrix->length + coordLengthNew) * matrix->info->elemSize;
+            coordMatrix = (coordLengthNew * matrix->length + coordHeightNew) * matrix->info->elemSize;
+            newMatrix->info->set((char*)matrix->value + coordMatrix, (char*)newMatrix->value + coordNew);
         }
     }
 }
@@ -109,10 +118,10 @@ void lineAddMatrix(Matrix* matrix, const int line, const void* cfs) {
 
     for (addLine = 0; addLine < matrix->height; addLine++) {
         for (addColon = 0; addColon < matrix->length; addColon++) {
-            coordChange = ((line - 1) * matrix->length + addColon) * sizeof(void*);
-            coordGet = (addLine * matrix->length + addColon) * sizeof(void*);
-            matrix->info->mult(cfs + addLine * matrix->info->elemSize, matrix->value + coordGet, timelyMult);
-            matrix->info->add(timelyMult, matrix->value + coordChange, matrix->value + coordChange);
+            coordChange = ((line - 1) * matrix->length + addColon) * matrix->info->elemSize;
+            coordGet = (addLine * matrix->length + addColon) * matrix->info->elemSize;
+            matrix->info->mult(cfs + addLine * matrix->info->elemSize, (char*)matrix->value + coordGet, timelyMult);
+            matrix->info->add(timelyMult, (char*)matrix->value + coordChange, (char*)matrix->value + coordChange);
         }
     }
 
