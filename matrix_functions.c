@@ -4,6 +4,12 @@
 #include "matrix_functions.h"
 
 void setMatrixElem(Matrix* matrix, const int colon, const int line, const void* value) {
+    if (matrix == NULL || value == NULL)
+        return;
+
+    if (matrix->value == NULL)
+        return;
+
     if (colon > matrix->length || colon < 0 || line > matrix->height || line < 0) {
         printf("Coord is out of range");
         return;
@@ -13,6 +19,12 @@ void setMatrixElem(Matrix* matrix, const int colon, const int line, const void* 
 }
 
 void printMatrix(const Matrix* matrix) {
+    if (matrix  == NULL)
+        return;
+
+    if (matrix->value == NULL)
+        return;
+
     int coordLength = 0, coordHeight = 0;
     int coord = 0;
 
@@ -29,6 +41,12 @@ void printMatrix(const Matrix* matrix) {
 }
 
 void sumMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
+    if (first == NULL || second == NULL || newMatrix == NULL)
+        return;
+
+    if (first->value == NULL || second->value == NULL)
+        return;
+
     if ((first->length != second->length) || (first->height != second->height)) {
         printf("Wrong size of Matrix");
         return;
@@ -56,6 +74,12 @@ void sumMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
 }
 
 void multMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
+    if (first == NULL || second == NULL || newMatrix == NULL)
+        return;
+
+    if (first->value == NULL || second->value == NULL)
+        return;
+
     if ((first->length != second->height)) {
         printf("Wrong size of Matrix");
         return;
@@ -75,6 +99,11 @@ void multMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
     int coord = 0, coordFirst = 0, coordSecond = 0;
     void* timelyMult = malloc(newMatrix->info->elemSize);
 
+    if (timelyMult == NULL) {
+        deleteMatrix(newMatrix);
+        return;
+    }
+
     for (coordNewLength = 0; coordNewLength < newMatrix->length; coordNewLength++) {
         for (coordNewHeight = 0; coordNewHeight < newMatrix->height; coordNewHeight++) {
             coord = (coordNewLength + coordNewHeight * newMatrix->length) * first->info->elemSize;
@@ -83,7 +112,7 @@ void multMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
             for (coordSlip = 0; coordSlip < first->length; coordSlip++) {
                 coordFirst = (coordNewHeight * first->length + coordSlip) * first->info->elemSize;
                 coordSecond = (coordNewLength + second->length * coordSlip) * first->info->elemSize;
-                newMatrix->info->mult(first->value + coordFirst, second->value + coordSecond, timelyMult);
+                newMatrix->info->mult((char*)first->value + coordFirst, (char*)second->value + coordSecond, timelyMult);
 
                 newMatrix->info->add((char*)newMatrix->value + coord, timelyMult, (char*)newMatrix->value + coord);
             }
@@ -94,6 +123,12 @@ void multMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
 }
 
 void transMatrix(const Matrix* matrix, Matrix* newMatrix) {
+    if (matrix == NULL || newMatrix == NULL)
+        return;
+
+    if (matrix->value == NULL)
+        return;
+
     initMatrix(newMatrix, matrix->length, matrix->height, matrix->info);
 
     if (newMatrix->value == NULL)
@@ -112,15 +147,27 @@ void transMatrix(const Matrix* matrix, Matrix* newMatrix) {
 }
 
 void lineAddMatrix(Matrix* matrix, const int line, const void* cfs) {
+    if (matrix == NULL || cfs == NULL)
+        return;
+
+    if (matrix->value == NULL)
+        return;
+
+    if (line > matrix->height || line < 1)
+        return;
+
     int addLine = 0, addColon = 0;
     int coordChange = 0, coordGet = 0;
     void* timelyMult = malloc(matrix->info->elemSize);
+
+    if (timelyMult == NULL)
+        return;
 
     for (addLine = 0; addLine < matrix->height; addLine++) {
         for (addColon = 0; addColon < matrix->length; addColon++) {
             coordChange = ((line - 1) * matrix->length + addColon) * matrix->info->elemSize;
             coordGet = (addLine * matrix->length + addColon) * matrix->info->elemSize;
-            matrix->info->mult(cfs + addLine * matrix->info->elemSize, (char*)matrix->value + coordGet, timelyMult);
+            matrix->info->mult((char*)cfs + addLine * matrix->info->elemSize, (char*)matrix->value + coordGet, timelyMult);
             matrix->info->add(timelyMult, (char*)matrix->value + coordChange, (char*)matrix->value + coordChange);
         }
     }

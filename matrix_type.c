@@ -23,4 +23,7 @@ void initMatrix(Matrix* matrix, const int height, const int length, const TypeIn
     }
 }
 
-void deleteMatrix(Matrix* matrix) { free(matrix->value); }
+void deleteMatrix(Matrix* matrix) {
+    free(matrix->value);
+    matrix->value = NULL;
+}
