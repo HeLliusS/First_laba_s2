@@ -3,27 +3,28 @@
 
 #include "matrix_functions.h"
 
-void setMatrixElem(Matrix* matrix, const int colon, const int line, const void* value) {
+int setMatrixElem(Matrix* matrix, const int colon, const int line, const void* value) {
     if (matrix == NULL || value == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
     if (matrix->value == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
-    if (colon > matrix->length || colon < 0 || line > matrix->height || line < 0) {
-        printf("Coord is out of range");
-        return;
+    if (colon >= matrix->length || colon < 0 || line >= matrix->height || line < 0) {
+        return MATRIX_ERR_BOUNDS;
     }
 
     matrix->info->set(value, (char*)matrix->value + (colon + line * matrix->length) * matrix->info->elemSize);
+
+    return MATRIX_OK;
 }
 
-void printMatrix(const Matrix* matrix) {
+int printMatrix(const Matrix* matrix) {
     if (matrix  == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
     if (matrix->value == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
     int coordLength = 0, coordHeight = 0;
     int coord = 0;
@@ -38,29 +39,28 @@ void printMatrix(const Matrix* matrix) {
         }
         printf("\n");
     }
+
+    return MATRIX_OK;
 }
 
-void sumMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
+int sumMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
     if (first == NULL || second == NULL || newMatrix == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
     if (first->value == NULL || second->value == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
     if ((first->length != second->length) || (first->height != second->height)) {
-        printf("Wrong size of Matrix");
-        return;
+        return MATRIX_ERR_SIZE;
     }
 
     if ((first->info != second->info)) {
-        printf("Types of Matrix elements do not match");
-        return;
+        return MATRIX_ERR_TYPE;
     }
 
-    initMatrix(newMatrix, first->height, first->length, first->info);
-
-    if (newMatrix->value == NULL)
-        return;
+    int result = initMatrix(newMatrix, first->height, first->length, first->info);
+    if (result != MATRIX_OK)
+        return result;
 
     int coordLength = 0, coordHeight = 0, length = first->length, height = first->height;
     int coord = 0;
@@ -71,29 +71,29 @@ void sumMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
             first->info->add(((char*)first->value + coord), ((char*)second->value + coord), ((char*)newMatrix->value + coord));
         }
     }
+
+    return MATRIX_OK;
 }
 
-void multMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
+int multMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
     if (first == NULL || second == NULL || newMatrix == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
     if (first->value == NULL || second->value == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
     if ((first->length != second->height)) {
-        printf("Wrong size of Matrix");
-        return;
+        return MATRIX_ERR_SIZE;
     }
 
     if ((first->info != second->info)) {
-        printf("Types of Matrix elements do not match");
-        return;
+        return MATRIX_ERR_TYPE;
     }
 
-    initMatrix(newMatrix, first->height, second->length, first->info);
+    int result = initMatrix(newMatrix, first->height, second->length, first->info);
 
-    if (newMatrix->value == NULL)
-        return;
+    if (result != MATRIX_OK)
+        return result;
 
     int coordNewLength = 0, coordNewHeight = 0, coordSlip = 0;
     int coord = 0, coordFirst = 0, coordSecond = 0;
@@ -101,7 +101,7 @@ void multMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
 
     if (timelyMult == NULL) {
         deleteMatrix(newMatrix);
-        return;
+        return MATRIX_ERR_MEMORY;
     }
 
     for (coordNewLength = 0; coordNewLength < newMatrix->length; coordNewLength++) {
@@ -120,19 +120,21 @@ void multMatrix(const Matrix* first, const Matrix* second, Matrix* newMatrix) {
     }
 
     free(timelyMult);
+
+    return MATRIX_OK;
 }
 
-void transMatrix(const Matrix* matrix, Matrix* newMatrix) {
+int transMatrix(const Matrix* matrix, Matrix* newMatrix) {
     if (matrix == NULL || newMatrix == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
     if (matrix->value == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
-    initMatrix(newMatrix, matrix->length, matrix->height, matrix->info);
+    int result = initMatrix(newMatrix, matrix->length, matrix->height, matrix->info);
 
-    if (newMatrix->value == NULL)
-        return;
+    if (result != MATRIX_OK)
+        return result;
 
     int coordLengthNew = 0, coordHeightNew = 0;
     int coordNew = 0, coordMatrix = 0;
@@ -144,24 +146,26 @@ void transMatrix(const Matrix* matrix, Matrix* newMatrix) {
             newMatrix->info->set((char*)matrix->value + coordMatrix, (char*)newMatrix->value + coordNew);
         }
     }
+
+    return MATRIX_OK;
 }
 
-void lineAddMatrix(Matrix* matrix, const int line, const void* cfs) {
+int lineAddMatrix(Matrix* matrix, const int line, const void* cfs) {
     if (matrix == NULL || cfs == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
     if (matrix->value == NULL)
-        return;
+        return MATRIX_ERR_NULL;
 
     if (line > matrix->height || line < 1)
-        return;
+        return MATRIX_ERR_LINE;
 
     int addLine = 0, addColon = 0;
     int coordChange = 0, coordGet = 0;
     void* timelyMult = malloc(matrix->info->elemSize);
 
     if (timelyMult == NULL)
-        return;
+        return MATRIX_ERR_MEMORY;
 
     for (addLine = 0; addLine < matrix->height; addLine++) {
         for (addColon = 0; addColon < matrix->length; addColon++) {
@@ -173,4 +177,6 @@ void lineAddMatrix(Matrix* matrix, const int line, const void* cfs) {
     }
 
     free(timelyMult);
+
+    return MATRIX_OK;
 }

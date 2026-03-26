@@ -3,16 +3,20 @@
 
 #include "matrix_type.h"
 
-void initMatrix(Matrix* matrix, const int height, const int length, const TypeInfo* info) {
-    if (height * length <= 0) {
-        printf("SizeError");
-        return;
-    }
+
+int initMatrix(Matrix* matrix, const int height, const int length, const TypeInfo* info) {
+
+    if (matrix == NULL || info == NULL)
+        return MATRIX_ERR_NULL;
+
+    if (height <= 0 || length <= 0)
+        return MATRIX_ERR_SIZE;
+
 
     matrix->value = malloc(info->elemSize * height * length);
 
     if (matrix->value == NULL)
-        return;
+        return MATRIX_ERR_MEMORY;
 
     matrix->info = info;
     matrix->height = height;
@@ -21,9 +25,12 @@ void initMatrix(Matrix* matrix, const int height, const int length, const TypeIn
     for (int i = 0; i < height * length; i++) {
         info->set(info->neutralElemAdd, (char*)matrix->value + i * info->elemSize);
     }
+
+    return MATRIX_OK;
 }
 
 void deleteMatrix(Matrix* matrix) {
+    if (matrix == NULL) return;
     free(matrix->value);
     matrix->value = NULL;
 }

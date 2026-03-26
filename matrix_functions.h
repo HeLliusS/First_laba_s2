@@ -2,17 +2,18 @@
 #define MATRIX_FUNCTIONS_H
 
 #include "matrix_type.h"
+#include "matrix_errors.h"
 
-void setMatrixElem(Matrix*, int, int, const void*);
+int setMatrixElem(Matrix*, int, int, const void*);
 
-void printMatrix(const Matrix*);
+int printMatrix(const Matrix*);
 
-void sumMatrix(const Matrix*, const Matrix*, Matrix*);
+int sumMatrix(const Matrix*, const Matrix*, Matrix*);
 
-void multMatrix(const Matrix*, const Matrix*, Matrix*);
+int multMatrix(const Matrix*, const Matrix*, Matrix*);
 
-void transMatrix(const Matrix*, Matrix*);
+int transMatrix(const Matrix*, Matrix*);
 
-void lineAddMatrix(Matrix*, int, const void*);
+int lineAddMatrix(Matrix*, int, const void*);
 
 #endif
