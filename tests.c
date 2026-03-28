@@ -1,79 +1,197 @@
 #include <assert.h>
-#include <stdbool.h>
+#include <stdlib.h>
 
 #include "matrix_functions.h"
 #include "integer_type.h"
+#include "double_type.h"
 
-void testSetter() {
-    Matrix check, right;
-    Integer n = {0};
-    bool k = true;
-    int i, j;
+void test_init_invalid_sizes() {
+    const TypeInfo* info = getIntegerTypeInfo();
+    Matrix m;
 
-    initMatrix(&check, 3, 3, getIntegerTypeInfo());
-    initMatrix(&right, 3, 3, getIntegerTypeInfo());
-
-    for(i = 0; i < 3; i++)
-        for (j = 0; j < 3; j++) {
-            n.value = i * 3 + j + 1;
-            right.info->set(&n, right.value + (j + i * right.length) * sizeof(void*));
-        }
-
-    for(i = 0; i < 3; i++)
-        for (j = 0; j < 3; j++) {
-            n.value = i * 3 + j + 1;
-            setMatrixElem(&check, j, i, &n);
-        }
-
-    for(i = 0; i < 3; i++)
-        for (j = 0; j < 3; j++)
-            if (((Integer*)(right.value + (j + i * right.length)))->value != ((Integer*)(check.value + (j + i * check.length)))->value) {
-
-                k = false;
-                break;
-            }
-
-    deleteMatrix(&right);
-    deleteMatrix(&check);
-
-    assert(k);
+    int ret = initMatrix(&m, 0, 5, info);
+    assert(ret == MATRIX_ERR_SIZE);
+    ret = initMatrix(&m, -2, 3, info);
+    assert(ret == MATRIX_ERR_SIZE);
+    ret = initMatrix(&m, 2, -3, info);
+    assert(ret == MATRIX_ERR_SIZE);
 }
 
-void testSumMatrix() {
+void test_init_delete() {
+    const TypeInfo* info = getIntegerTypeInfo();
+    Matrix m;
 
-    Matrix first, second, third;
+    int ret = initMatrix(&m, 2, 3, info);
+    assert(ret == MATRIX_OK);
+    assert(m.value != NULL);
+    assert(m.height == 2);
+    assert(m.length == 3);
+    assert(m.info == info);
 
-    int i, j;
-    Integer res[16];
-    Integer valueFirst, valueSecond;
-    bool k = true;
+    deleteMatrix(&m);
+    assert(m.value == NULL);
+}
 
+void test_set_elem() {
+    const TypeInfo* info = getIntegerTypeInfo();
+    Matrix m;
+    initMatrix(&m, 2, 2, info);
 
-    initMatrix(&first, 4, 4, getIntegerTypeInfo());
-    initMatrix(&second, 4, 4, getIntegerTypeInfo());
+    Integer val1 = {5};
+    Integer val2 = {7};
 
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 4; j++) {
-            valueFirst.value = i * 4 + j + 1;
-            valueSecond.value = j * 4 + i;
+    int ret = setMatrixElem(&m, 0, 0, &val1);
+    assert(ret == MATRIX_OK);
+    ret = setMatrixElem(&m, 1, 1, &val2);
+    assert(ret == MATRIX_OK);
 
-            res[i * 4 + j].value = valueFirst.value + valueSecond.value;
+    ret = setMatrixElem(&m, 2, 0, &val1);
+    assert(ret == MATRIX_ERR_BOUNDS);
+    ret = setMatrixElem(&m, 0, 2, &val1);
+    assert(ret == MATRIX_ERR_BOUNDS);
 
-            setMatrixElem(&first, j, i, &valueFirst);
-            setMatrixElem(&second, j, i, &valueSecond);
+    deleteMatrix(&m);
+}
+
+void test_sum() {
+    const TypeInfo* info = getIntegerTypeInfo();
+    Matrix a, b, c;
+
+    initMatrix(&a, 2, 2, info);
+    initMatrix(&b, 2, 2, info);
+
+    Integer vals[4] = {{1},{2},{3},{4}};
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 2; ++j)
+            setMatrixElem(&a, j, i, &vals[i*2 + j]);
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 2; ++j)
+            setMatrixElem(&b, j, i, &vals[i*2 + j]);
+
+    int ret = sumMatrix(&a, &b, &c);
+    assert(ret == MATRIX_OK);
+
+    deleteMatrix(&a);
+    deleteMatrix(&b);
+    deleteMatrix(&c);
+}
+
+void test_mult() {
+    const TypeInfo* info = getIntegerTypeInfo();
+    Matrix a, b, c;
+
+    initMatrix(&a, 2, 2, info);
+    initMatrix(&b, 2, 2, info);
+    Integer val_a[4] = {{1},{2},{3},{4}};
+    Integer val_b[4] = {{5},{6},{7},{8}};
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            setMatrixElem(&a, j, i, &val_a[i*2 + j]);
+            setMatrixElem(&b, j, i, &val_b[i*2 + j]);
         }
     }
 
-    sumMatrix(&first, &second, &third);
+    int ret = multMatrix(&a, &b, &c);
+    assert(ret == MATRIX_OK);
 
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 4; j++) {
-            if (((Integer*)(third.value + (i * 4 + j) * sizeof(void*)))->value != res[i * 4 + j].value) {
-                k = false;
-                break;
-            }
+    deleteMatrix(&a);
+    deleteMatrix(&b);
+    deleteMatrix(&c);
+}
+
+void test_trans() {
+    const TypeInfo* info = getIntegerTypeInfo();
+    Matrix m, t;
+
+    initMatrix(&m, 2, 3, info);
+    int k = 1;
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 3; ++j) {
+            Integer val = {k++};
+            setMatrixElem(&m, j, i, &val);
         }
-    }
 
-    assert(k);
+    int ret = transMatrix(&m, &t);
+    assert(ret == MATRIX_OK);
+
+    deleteMatrix(&m);
+    deleteMatrix(&t);
+}
+
+void test_line_add() {
+    const TypeInfo* info = getIntegerTypeInfo();
+    Matrix m;
+
+    initMatrix(&m, 3, 3, info);
+    int k = 1;
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) {
+            Integer val = {k++};
+            setMatrixElem(&m, j, i, &val);
+        }
+
+    Integer coeffs[3] = {{1},{2},{3}};
+    int ret = lineAddMatrix(&m, 2, coeffs);
+    assert(ret == MATRIX_OK);
+
+    deleteMatrix(&m);
+}
+
+void test_error_conditions() {
+    const TypeInfo* intInfo = getIntegerTypeInfo();
+    const TypeInfo* doubleInfo = getDoubleTypeInfo();
+
+    Matrix a, b, c;
+
+    // Разные типы
+    initMatrix(&a, 2, 2, intInfo);
+    initMatrix(&b, 2, 2, doubleInfo);
+    int ret = sumMatrix(&a, &b, &c);
+    assert(ret == MATRIX_ERR_TYPE);
+    ret = multMatrix(&a, &b, &c);
+    assert(ret == MATRIX_ERR_TYPE);
+    deleteMatrix(&a);
+    deleteMatrix(&b);
+
+    // Неправильные размеры для сложения
+    initMatrix(&a, 2, 3, intInfo);
+    initMatrix(&b, 2, 2, intInfo);
+    ret = sumMatrix(&a, &b, &c);
+    assert(ret == MATRIX_ERR_SIZE);
+    deleteMatrix(&a);
+    deleteMatrix(&b);
+
+    // Неправильные размеры для умножения
+    initMatrix(&a, 2, 3, intInfo);
+    initMatrix(&b, 2, 2, intInfo);
+    ret = multMatrix(&a, &b, &c);
+    assert(ret == MATRIX_ERR_SIZE);
+    deleteMatrix(&a);
+    deleteMatrix(&b);
+
+    // Передача NULL
+    ret = sumMatrix(NULL, &b, &c);
+    assert(ret == MATRIX_ERR_NULL);
+    ret = multMatrix(&a, NULL, &c);
+    assert(ret == MATRIX_ERR_NULL);
+    ret = transMatrix(NULL, &c);
+    assert(ret == MATRIX_ERR_NULL);
+    ret = lineAddMatrix(NULL, 1, NULL);
+    assert(ret == MATRIX_ERR_NULL);
+}
+
+int main() {
+    test_init_invalid_sizes();
+    test_init_delete();
+    test_set_elem();
+    test_sum();
+    test_mult();
+    test_trans();
+    test_line_add();
+    test_error_conditions();
+
+    deleteIntegerTypeInfo();
+    deleteDoubleTypeInfo();
+
+    return 0;
 }
