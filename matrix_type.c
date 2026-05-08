@@ -22,8 +22,8 @@ int initMatrix(Matrix* matrix, const int height, const int length, const TypeInf
     matrix->height = height;
     matrix->length = length;
 
-    for (int i = 0; i < height * length; i++) {
-        info->set(info->neutralElemAdd, (char*)matrix->value + i * info->elemSize);
+    for (int elemIndex = 0; elemIndex < height * length; elemIndex++) {
+        info->set(info->neutralElemAdd, (char*)matrix->value + elemIndex * info->elemSize);
     }
 
     return MATRIX_OK;
